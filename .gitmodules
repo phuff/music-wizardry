@@ -1,0 +1,3 @@
+[submodule "wizardry-base"]
+	path = wizardry-base
+	url = git@github.com:phuff/wizardry-base.git
