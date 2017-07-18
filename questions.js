@@ -1,3 +1,8 @@
+var stem_directions = {
+    'treble': 1,
+    'bass': -1
+};
+
 function createCardFor(clef, note, noteAnswer) {
     return {
         "question": {"render": function() {
@@ -13,12 +18,11 @@ function createCardFor(clef, note, noteAnswer) {
                          stave.addClef(clef);
                          stave.setContext(context).draw();
                          var notes = [
-                             new Vex.Flow.StaveNote({clef: clef, keys: [note], duration: "q" })];
+                             new Vex.Flow.StaveNote({clef: clef, keys: [note], duration: "q", stem_direction: stem_directions[clef] })];
                          var voice = new Vex.Flow.Voice({num_beats: 1,  beat_value: 4});
                          voice.addTickables(notes);
                          var formatter = new Vex.Flow.Formatter().joinVoices([voice]).format([voice], 400);
                          voice.draw(context, stave);
-                         console.log("Drew: " + note + " with answer: " + noteAnswer);
                      }},
         "answer": noteAnswer
     };
