@@ -32,33 +32,93 @@ var flashcards =
     {
         "Bass Clef":
         [
-            createCardFor("bass", "F/2", "F"),
-            createCardFor("bass", "G/2", "G"),
-            createCardFor("bass", "A/2", "A"),
-            createCardFor("bass", "B/2", "B"),
-            createCardFor("bass", "C/3", "C"),
-            createCardFor("bass", "D/3", "D"),
-            createCardFor("bass", "E/3", "E"),
-            createCardFor("bass", "F/3", "F"),
-            createCardFor("bass", "G/3", "G"),
-            createCardFor("bass", "A/3", "A"),
-            createCardFor("bass", "B/3", "B"),
-            createCardFor("bass", "C/4", "C")
+            createCardFor("bass", "F/2", 41),
+            createCardFor("bass", "G/2", 43),
+            createCardFor("bass", "A/2", 45),
+            createCardFor("bass", "B/2", 47),
+            createCardFor("bass", "C/3", 48),
+            createCardFor("bass", "D/3", 50),
+            createCardFor("bass", "E/3", 52),
+            createCardFor("bass", "F/3", 53),
+            createCardFor("bass", "G/3", 55),
+            createCardFor("bass", "A/3", 57),
+            createCardFor("bass", "B/3", 59),
+            createCardFor("bass", "C/4", 60)
         ],
         "Treble Clef":
         [
-           createCardFor("treble", "C/4", "C"),
-           createCardFor("treble", "D/4", "D"),
-           createCardFor("treble", "E/4", "E"),
-           createCardFor("treble", "F/4", "F"),
-           createCardFor("treble", "G/4", "G"),
-           createCardFor("treble", "A/4", "A"),
-           createCardFor("treble", "B/4", "B"),
-           createCardFor("treble", "C/5", "C"),
-           createCardFor("treble", "D/5", "D"),
-           createCardFor("treble", "E/5", "E"),
-           createCardFor("treble", "F/5", "F"),
-           createCardFor("treble", "G/5", "G"),
-           createCardFor("treble", "B/3", "B")
+           createCardFor("treble", "C/4", 60),
+           createCardFor("treble", "D/4", 62),
+           createCardFor("treble", "E/4", 64),
+           createCardFor("treble", "F/4", 65),
+           createCardFor("treble", "G/4", 67),
+           createCardFor("treble", "A/4", 69),
+           createCardFor("treble", "B/4", 71),
+           createCardFor("treble", "C/5", 72),
+           createCardFor("treble", "D/5", 74),
+           createCardFor("treble", "E/5", 76),
+           createCardFor("treble", "F/5", 77),
+           createCardFor("treble", "G/5", 79)
         ]
     };
+
+
+var questionCallbacks = {};
+
+var currentQuestion = null;
+
+function initializeCallbacks(callbacks) {
+    questionCallbacks = callbacks;
+}
+
+addHook('initialize', initializeCallbacks);
+
+addHook('changeQuestion', function(nextQuestion) {
+            currentQuestion = nextQuestion;
+        });
+
+var midiOff = 128;
+var midiOn = 144;
+
+function midiMessageReceived(message) {
+    var action = message.data[0];
+    var note = message.data[1];
+    console.log("message data:");
+    console.log(message.data);
+    console.log(currentQuestion);
+    if(currentQuestion != null) {
+        if(action == midiOn) {
+            console.log("currentQuestion.rawAnswer: " + currentQuestion.rawAnswer + " note: " + note);
+            if (currentQuestion.rawAnswer == note){
+                console.log("They're the same.");
+                questionCallbacks.showCorrect();   
+            } else {
+                console.log("They're not the same.");
+                questionCallbacks.showWrong();
+            }
+        }
+        else if (action == midiOff) {
+            questionCallbacks.nextQuestion();
+        }
+    }
+}
+
+function turnOnTheMidi() {
+if (navigator.requestMIDIAccess) {
+    navigator.requestMIDIAccess({
+        sysex: false
+    }).then(function(midi) {
+                var inputs = midi.inputs.values();
+                // loop through all inputs
+                for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
+                    input.value.onmidimessage = midiMessageReceived;
+                }
+            },
+            function(e) {alert("Something weird happened.  You have no midi!");});
+} else {
+    alert("No MIDI support in your browser.");
+}
+}
+turnOnTheMidi();
+
+
