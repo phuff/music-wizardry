@@ -63,10 +63,16 @@ var flashcards =
     };
 
 
+function frequencyFromNoteNumber(note) {
+    return 440 * Math.pow(2, (note - 69) / 12);
+}
+
 var questionCallbacks = {};
 
 var currentQuestion = null;
 
+var currentNote = null;
+var audioContext = new AudioContext;
 function initializeCallbacks(callbacks) {
     questionCallbacks = callbacks;
 }
@@ -80,6 +86,24 @@ addHook('changeQuestion', function(nextQuestion) {
 var midiOff = 128;
 var midiOn = 144;
 
+function playNote(midiNote) {
+    var frequency = frequencyFromNoteNumber(midiNote);
+
+    oscillator = audioContext.createOscillator();
+    oscillator.frequency.value = frequency;
+    
+    oscillator.connect(audioContext.destination);
+    
+    oscillator.start(0);
+    currentNote = oscillator;
+}
+
+function stopCurrentNote() {
+    if (currentNote) {
+        currentNote.stop(0);
+    }
+}
+
 function midiMessageReceived(message) {
     var action = message.data[0];
     var note = message.data[1];
@@ -89,6 +113,8 @@ function midiMessageReceived(message) {
     if(currentQuestion != null) {
         if(action == midiOn) {
             console.log("currentQuestion.rawAnswer: " + currentQuestion.rawAnswer + " note: " + note);
+            stopCurrentNote();
+            playNote(note);
             if (currentQuestion.rawAnswer == note){
                 console.log("They're the same.");
                 questionCallbacks.showCorrect();   
@@ -99,6 +125,7 @@ function midiMessageReceived(message) {
         }
         else if (action == midiOff) {
             questionCallbacks.nextQuestion();
+            stopCurrentNote();
         }
     }
 }
